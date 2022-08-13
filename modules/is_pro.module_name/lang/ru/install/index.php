@@ -1,0 +1,5 @@
+<?
+$MESS['ISPRO___MODULENAME___NAME'] = '__MODULENAME__';
+$MESS['ISPRO___MODULENAME___DESC'] = 'Описание';
+$MESS['ISPRO___MODULENAME___PARTNER_NAME'] = 'IS_PRO';
+$MESS['ISPRO___MODULENAME___PARTNER_URI'] = 'https://github.com/IvanShabanov/';
