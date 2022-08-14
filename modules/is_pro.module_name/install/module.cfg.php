@@ -1,6 +1,6 @@
 <?
 $arModuleCfg = [
-	'MODULE_ID' => 'is_pro.__MODULENAME__',
+	'MODULE_ID' => 'is_pro.module_name',
 
 	/* Настройки модуля */
 	'options_list' => [

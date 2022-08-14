@@ -1,30 +1,17 @@
-<?
-namespace IS_PRO\__MODULENAME__;
+<?php
+if (file_exists(__DIR__ . "/install/module.cfg.php")) {
+	include(__DIR__ . "/install/module.cfg.php");
+};
 
-/*
-require_once(__DIR__ . '/lib/*.php');
-*/
+CModule::IncludeModule($arModuleCfg['MODULE_ID']);
+global $DBType;
 
-if (class_exists('\IS_PRO\__MODULENAME__\Main')) {
-	return;
-}
+$arClasses=array(
+	/* Библиотеки и слассы для авто загрузки */
+	/*
+	'IS_PRO\module_name\lib'=>'lib/lib.php',
+    'IS_PRO\module_name\cMain_module_name'=>'classes/general/cMain_module_name.php'
+	*/
+);
 
-class Main
-{
-
-	function OnProlog()
-	{
-
-	}
-
-	public function OnEpilog()
-	{
-
-	}
-
-	public function OnEndBufferContent(&$content)
-	{
-
-	}
-
-}
+CModule::AddAutoloadClasses($arModuleCfg['MODULE_ID'], $arClasses);

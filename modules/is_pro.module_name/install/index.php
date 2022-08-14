@@ -3,7 +3,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 Loc::loadMessages(__FILE__);
 
-Class is_pro___MODULENAME__ extends CModule
+Class is_pro_module_name extends CModule
 {
 	public function __construct()
 	{
@@ -16,10 +16,10 @@ Class is_pro___MODULENAME__ extends CModule
 			$this->MODULE_ID 		   = $arModuleCfg['MODULE_ID'];
 			$this->MODULE_VERSION  	   = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
-			$this->MODULE_NAME 		   = Loc::getMessage("ISPRO___MODULENAME___NAME");
-			$this->MODULE_DESCRIPTION  = Loc::getMessage("ISPRO___MODULENAME___DESC");
-			$this->PARTNER_NAME 	   = Loc::getMessage("ISPRO___MODULENAME___PARTNER_NAME");
-			$this->PARTNER_URI  	   = Loc::getMessage("ISPRO___MODULENAME___PARTNER_URI");
+			$this->MODULE_NAME 		   = Loc::getMessage("ISPRO_module_name_NAME");
+			$this->MODULE_DESCRIPTION  = Loc::getMessage("ISPRO_module_name_DESC");
+			$this->PARTNER_NAME 	   = Loc::getMessage("ISPRO_module_name_PARTNER_NAME");
+			$this->PARTNER_URI  	   = Loc::getMessage("ISPRO_module_name_PARTNER_URI");
 		}
 		return false;
 	}
@@ -28,8 +28,8 @@ Class is_pro___MODULENAME__ extends CModule
 	public function DoInstall()
 	{
 		global $DB, $APPLICATION, $step;
-		$this->InstallEvents();
 		ModuleManager::registerModule($this->MODULE_ID);
+		$this->InstallEvents();
 		$this->SetDefaultOptions();
 		return true;
 	}
@@ -47,21 +47,16 @@ Class is_pro___MODULENAME__ extends CModule
 	public function InstallEvents()
 	{
 		/*
-		RegisterModuleDependences("main", "OnProlog", $this->MODULE_ID,"IS_PRO\__MODULENAME__\Main", "OnProlog");
-		RegisterModuleDependences("main", "OnEpilog", $this->MODULE_ID, "IS_PRO\__MODULENAME__\Main", "OnEpilog");
-		RegisterModuleDependences("main", "OnEndBufferContent", $this->MODULE_ID, "IS_PRO\__MODULENAME__\Main", "OnEndBufferContent");
+		RegisterModuleDependences("main", "OnProlog", $this->MODULE_ID,"IS_PRO\module_name\Main", "OnProlog");
+		RegisterModuleDependences("main", "OnEpilog", $this->MODULE_ID, "IS_PRO\module_name\Main", "OnEpilog");
+		RegisterModuleDependences("main", "OnEndBufferContent", $this->MODULE_ID, "IS_PRO\module_name\Main", "OnEndBufferContent");
 		*/
 		return false;
 	}
 
 	public function SetDefaultOptions()
 	{
-		include(__DIR__."/module.cfg.php");
-		include(__DIR__ . "/../default_option.php");
-		foreach ($options_list as $option_name => $option_type) {
-			$option[$option_name] = $is_pro___MODULENAME___default_options[$option_name];
-			\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], $option_name, $option[$option_name]);
-		}
+
 	}
 
 	public function RemoveOptions()
@@ -73,9 +68,9 @@ Class is_pro___MODULENAME__ extends CModule
 	public function UnInstallEvents()
 	{
 		/*
-		UnRegisterModuleDependences("main", "OnProlog", $this->MODULE_ID, "IS_PRO\__MODULENAME__\Main", "OnProlog");
-		UnRegisterModuleDependences("main", "OnEpilog", $this->MODULE_ID, "IS_PRO\__MODULENAME__\Main", "OnEpilog");
-		UnRegisterModuleDependences("main", "OnEndBufferContent", $this->MODULE_ID, "IS_PRO\__MODULENAME__\Main", "OnEndBufferContent");
+		UnRegisterModuleDependences("main", "OnProlog", $this->MODULE_ID, "IS_PRO\module_name\Main", "OnProlog");
+		UnRegisterModuleDependences("main", "OnEpilog", $this->MODULE_ID, "IS_PRO\module_name\Main", "OnEpilog");
+		UnRegisterModuleDependences("main", "OnEndBufferContent", $this->MODULE_ID, "IS_PRO\module_name\Main", "OnEndBufferContent");
 		*/
 		return false;
 	}

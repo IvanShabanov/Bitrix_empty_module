@@ -1,8 +1,12 @@
 <?
 
-use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Loader;
+use Bitrix\Main\Text\HtmlFilter;
+
+global $USER;
+
 
 if (!$USER->IsAdmin()) {
 	return;
@@ -32,23 +36,26 @@ $eeror_message = '';
 $saveOption = false;
 $setDefault = false;
 
-if ($request->getpost('saveoptions') != '') {
-	$saveOption = true;
-}
+if (check_bitrix_sessid()) {
+	if (!empty($request->getpost('save'))) {
+		$saveOption = true;
+	}
 
-if ($request->getpost('saveoptionsdefault') != '') {
-	$setDefault = true;
+	if (!empty($request->getpost('reset'))) {
+		$setDefault = true;
+	}
 }
 
 
 $isConfigurated = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED');
 if ($isConfigurated != 'Y') {
+	\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED', 'Y');
 	$setDefault = true;
 }
 
 function checkOption(string $option_name, $option)
 {
-	/* Тут проверяем значение настроек, есои есть ошибка, то возвращаем ее текст, иначе вернем true */
+	/* Тут проверяем значение настроек, если есть ошибка, то возвращаем ее текст, иначе вернем true */
 	return true;
 }
 
@@ -58,7 +65,7 @@ foreach ($options_list as $option_name => $arOption) {
 		$option[$option_name] = $request->getpost('option_' . $option_name);
 		$optionIsValid = checkOption($option_name, $option[$option_name]);
 		if ($optionIsValid !== true) {
-			$eeror_message .= 'ERROR: ' . Loc::getMessage('ISPRO___MODULENAME___' . $option_name) . ' ' . $optionIsValid . PHP_EOL;
+			$eeror_message .= 'ERROR: ' . Loc::getMessage('ISPRO_module_name_' . $option_name) . ' ' . $optionIsValid . PHP_EOL;
 		}
 		if (is_array($option[$option_name])) {
 			$option[$option_name] = json_encode($option[$option_name]);
@@ -70,7 +77,7 @@ foreach ($options_list as $option_name => $arOption) {
 	};
 	if (($saveOption || $setDefault) && ($optionIsValid === true)) {
 		\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], $option_name, $option[$option_name]);
-		$ok_message .= 'SAVED: ' . Loc::getMessage('ISPRO___MODULENAME___' . $option_name) . PHP_EOL;
+		$ok_message .= 'SAVED: ' . Loc::getMessage('ISPRO_module_name_' . $option_name) . PHP_EOL;
 	};
 
 	$option[$option_name] = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
@@ -98,15 +105,15 @@ if ($eeror_message != '') {
 $tabList = [
 	[
 		'DIV' => 'description',
-		'TAB' => Loc::getMessage('ISPRO___MODULENAME___TAB_SET_DESC'),
+		'TAB' => Loc::getMessage('ISPRO_module_name_TAB_SET_DESC'),
 		'ICON' => 'ib_settings',
-		'TITLE' => Loc::getMessage('ISPRO___MODULENAME___TAB_TITLE_DESC')
+		'TITLE' => Loc::getMessage('ISPRO_module_name_TAB_TITLE_DESC')
 	],
 	[
 		'DIV' => 'setting',
-		'TAB' => Loc::getMessage('ISPRO___MODULENAME___TAB_SET_OPTION'),
+		'TAB' => Loc::getMessage('ISPRO_module_name_TAB_SET_OPTION'),
 		'ICON' => 'ib_settings',
-		'TITLE' => Loc::getMessage('ISPRO___MODULENAME___TAB_TITLE_OPTION')
+		'TITLE' => Loc::getMessage('ISPRO_module_name_TAB_TITLE_OPTION')
 	],
 ];
 
@@ -114,12 +121,12 @@ $tabList = [
 $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID']) . '_options', $tabList);
 ?>
 <style>
-	#__MODULENAME___form textarea {
+	#module_name_form textarea {
 		width: 100%;
 		min-height: 150px;
 	}
 </style>
-<form method="POST" action="<?= $currentUrl; ?>" enctype="multipart/form-data" id="__MODULENAME___form">
+<form method="POST" action="<?= $currentUrl; ?>" enctype="multipart/form-data" id="module_name_form">
 	<?= bitrix_sessid_post(); ?>
 	<?
 	$tabControl->Begin();
@@ -131,7 +138,7 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 	<tr>
 		<td colspan="2">
 			<?= BeginNote(); ?>
-			<?= Loc::getMessage('ISPRO___MODULENAME___DESCRIPTION'); ?>
+			<?= Loc::getMessage('ISPRO_module_name_DESCRIPTION'); ?>
 			<?= EndNote(); ?>
 		</td>
 	</tr>
@@ -143,27 +150,24 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 	<?foreach ($options_list as $option_name => $arOption) :?>
 		<tr>
 			<td width="20%" valign="top">
-				<?= Loc::getMessage('ISPRO___MODULENAME___'.$option_name) ?>
+				<?= Loc::getMessage('ISPRO_module_name_'.$option_name) ?>
 			</td>
 			<td width="80%">
-				<?if ($arOption['type'] == 'text') :?>
-					<input type="text" name="option_<?=$option_name?>" value="<?=$option[$option_name]?>" />
-				<?endif?>
 				<?if ($arOption['type'] == 'textarea') :?>
-					<textarea name="option_<?=$option_name?>"><?= $option['TEMPLATE'] ?></textarea>
-				<?endif?>
-				<?if ($arOption['type'] == 'checkbox') :?>
+					<textarea name="option_<?=$option_name?>"><?= HtmlFilter::encode($option[$option_name]) ?></textarea>
+				<?elseif ($arOption['type'] == 'checkbox') :?>
 					<input type="hidden"  name="option_<?=$option_name?>" value="N" />
 					<input type="checkbox" name="option_<?=$option_name?>" value="Y" <?= ($option[$option_name] == "Y") ? 'checked="checked"' : '' ?> />
-				<?endif?>
-				<?if ($arOption['type'] == 'select') :?>
+				<?elseif ($arOption['type'] == 'select') :?>
 					<select name="option_<?=$option_name?>">
 					<? foreach ($arOption['values'] as $value) : ?>
 						<option value="<?= $value ?>" <?= ($option[$option_name] == $value) ? 'selected' : '' ?>>
-							<?= Loc::getMessage('ISPRO___MODULENAME___'.$option_name.'_'.$value) ?>
+							<?= Loc::getMessage('ISPRO_module_name_'.$option_name.'_'.$value) ?>
 						</option>
 					<? endforeach ?>
 					</select>
+				<?else :?>
+					<input type="<?=$arOption['type']?>" name="option_<?=$option_name?>" value="<?=HtmlFilter::encode($option[$option_name])?>" />
 				<?endif?>
 
 			</td>
@@ -172,8 +176,8 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 
 	<tr>
 		<td colspan="2">
-			<input type="submit" class="adm-btn-save" name="saveoptions" value="<? echo Loc::getMessage('ISPRO___MODULENAME___SAVE'); ?>">
-			<input type="submit" class="adm-btn-save" name="saveoptionsdefault" value="<? echo Loc::getMessage('ISPRO___MODULENAME___DEFAULT'); ?>">
+			<input type="submit" class="adm-btn-save" name="save" value="<? echo Loc::getMessage('ISPRO_module_name_SAVE'); ?>">
+			<input type="submit" class="adm-btn-save" name="reset" value="<? echo Loc::getMessage('ISPRO_module_name_DEFAULT'); ?>">
 		</td>
 	</tr>
 
