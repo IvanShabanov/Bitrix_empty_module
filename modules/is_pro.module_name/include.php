@@ -3,8 +3,8 @@ if (file_exists(__DIR__ . "/install/module.cfg.php")) {
 	include(__DIR__ . "/install/module.cfg.php");
 };
 
-CModule::IncludeModule($arModuleCfg['MODULE_ID']);
-global $DBType;
+use Bitrix\Main\Loader;
+Loader::includeModule($arModuleCfg['MODULE_ID']);
 
 $arClasses=array(
 	/* Библиотеки и слассы для авто загрузки */
@@ -14,4 +14,4 @@ $arClasses=array(
 	*/
 );
 
-CModule::AddAutoloadClasses($arModuleCfg['MODULE_ID'], $arClasses);
+Loader::registerAutoLoadClasses($arModuleCfg['MODULE_ID'], $arClasses);

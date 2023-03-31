@@ -1,6 +1,6 @@
 <?
 $arModuleCfg = [
-	'MODULE_ID' => 'is_pro.module_name',
+	'MODULE_ID' => mb_strtolower('is_pro.module_name'),
 
 	/* Настройки модуля */
 	'options_list' => [
@@ -30,6 +30,12 @@ $arModuleCfg = [
 		'TEXTAREA_SETTING' => [
 			'type' => 'textarea',
 			'default' => ''
+		],
+
+		'FILE_SETTING' => [
+			'type' => 'file',
+			'ext'	=> 'csv'
 		]
+
 	]
 ];
