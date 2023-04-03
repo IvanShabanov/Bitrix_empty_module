@@ -82,6 +82,28 @@ foreach ($siteIds as $sId => $sName) {
 			if ($arOption['type'] == 'file') {
 				$files = $request->getFile($option_name);
 				if (!empty($files)) {
+					$arr_file = [
+						"name" => $files['name'],
+						"size" => $files['size'],
+						"tmp_name" => $files['tmp_name'],
+						"type" => "",
+						"old_file" => \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name),
+						"del" => "Y",
+						"MODULE_ID" => $arModuleCfg['MODULE_ID']
+					];
+
+					$fid = CFile::SaveFile($arr_file, $arModuleCfg['MODULE_ID']);
+					if ($fid > 0) {
+						$option[$option_name] = $fid;
+						$optionIsValid = checkOption($option_name_def, $option[$option_name]);
+					} else {
+						$optionIsValid = 'File not loaded';
+					}
+					if ($optionIsValid !== true) {
+						$eeror_message .= 'ERROR: ' . Loc::getMessage('ISPRO_module_name_' . $option_name_def) . ' ' . $optionIsValid . PHP_EOL;
+					}
+				}
+				if (!empty($files)) {
 					$tmp_name = $files["tmp_name"];
 					if ($tmp_name != '') {
 						$extension = explode(".", basename($files["name"]));
@@ -219,11 +241,12 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 						</select>
 					<? elseif ($arOption['type'] == 'file') : ?>
 						<?
+						$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
 						echo CFile::InputFile(
 							$option_name,
 							20,
-							0,
-							'/upload/',
+							$fid,
+							'/upload/'.$arModuleCfg['MODULE_ID'], '/',
 							0,
 							$arOption['ext'],
 							"",
@@ -231,7 +254,7 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 							"class=typeinput",
 							"",
 							false,
-							false
+							true
 						)
 						?>
 					<? else : ?>
