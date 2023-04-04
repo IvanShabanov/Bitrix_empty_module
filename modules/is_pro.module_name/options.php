@@ -57,12 +57,11 @@ if (check_bitrix_sessid()) {
 
 foreach ($siteIds as $sId => $sName) {
 
-
 	$setDefault = false;
 
 	$isConfigurated = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED_' . $sId);
-	if ($isConfigurated != 'Y') {
 
+	if ($isConfigurated != 'Y') {
 		\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED_' . $sId, 'Y');
 		$setDefault = true;
 	}
@@ -80,19 +79,21 @@ foreach ($siteIds as $sId => $sName) {
 		if ($saveOption) {
 
 			if ($arOption['type'] == 'file') {
+				$files = [];
 				$files = $request->getFile($option_name);
-				if (!empty($files)) {
+				if (!empty($files) && (isset($files['tmp_name'])) && (!empty($files['tmp_name']))) {
+
 					$arr_file = [
 						"name" => $files['name'],
 						"size" => $files['size'],
 						"tmp_name" => $files['tmp_name'],
-						"type" => "",
+						"type" => $files['type'],
 						"old_file" => \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name),
 						"del" => "Y",
 						"MODULE_ID" => $arModuleCfg['MODULE_ID']
 					];
 
-					$fid = CFile::SaveFile($arr_file, $arModuleCfg['MODULE_ID']);
+					$fid = CFile::SaveFile($arr_file, $arModuleCfg['MODULE_ID'], true ,false, '1');
 					if ($fid > 0) {
 						$option[$option_name] = $fid;
 						$optionIsValid = checkOption($option_name_def, $option[$option_name]);
@@ -103,33 +104,14 @@ foreach ($siteIds as $sId => $sName) {
 						$eeror_message .= 'ERROR: ' . Loc::getMessage('ISPRO_module_name_' . $option_name_def) . ' ' . $optionIsValid . PHP_EOL;
 					}
 				}
-				if (!empty($files)) {
-					$tmp_name = $files["tmp_name"];
-					if ($tmp_name != '') {
-						$extension = explode(".", basename($files["name"]));
-						$extension = end($extension);
-						@mkdir($doc_root . '/upload/' . $arModuleCfg['MODULE_ID']);
-						$filename = $doc_root . '/upload/' . $arModuleCfg['MODULE_ID'] . '/' . uniqid() . '.' . $extension;
-						$isloaded = true;
-						if (!move_uploaded_file($tmp_name, $filename)) {
-							if (!copy($tmp_name, $filename)) {
-								$isloaded = false;
-							}
-						}
-						if ($isloaded) {
-							$option[$option_name] = $filename;
-							$optionIsValid = checkOption($option_name_def, $option[$option_name]);
-						} else {
-							$optionIsValid = 'File not loaded';
-						};
-						if ($optionIsValid !== true) {
-							$eeror_message .= 'ERROR: ' . Loc::getMessage('ISPRO_module_name_' . $option_name_def) . ' ' . $optionIsValid . PHP_EOL;
-						}
+				if ($request->getpost($option_name.'_del') == 'Y') {
+					$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
+					if ($fid > 0) {
+						CFile::Delete($fid);
 					}
-				}
+				};
 			} else {
 				$option[$option_name] = $request->getpost('option_' . $option_name);
-				$ok_message .= 'Пришло Значение: option_' . $option_name . ':' . $option[$option_name] . PHP_EOL;
 				$optionIsValid = checkOption($option_name_def, $option[$option_name]);
 				if ($optionIsValid !== true) {
 					$eeror_message .= 'ERROR: ' . Loc::getMessage('ISPRO_module_name_' . $option_name_def) . ' ' . $optionIsValid . PHP_EOL;
@@ -139,7 +121,15 @@ foreach ($siteIds as $sId => $sName) {
 				};
 			}
 		} elseif ($setDefault) {
-			$option[$option_name] = $arOption['default'];
+			if ($arOption['type'] == 'file') {
+				$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
+				if ($fid > 0) {
+					CFile::Delete($fid);
+				}
+				$option[$option_name] = 0;
+			} else {
+				$option[$option_name] = $arOption['default'];
+			}
 			$optionIsValid = true;
 		};
 		if (($saveOption || $setDefault) && ($optionIsValid === true)) {
@@ -153,6 +143,10 @@ foreach ($siteIds as $sId => $sName) {
 		};
 	};
 };
+if (($eeror_message == '') && ($ok_message != '')) {
+	$ok_message = 'Saved';
+}
+
 
 if ($ok_message != '') {
 	$message = new \CAdminMessage(array(
@@ -243,18 +237,18 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 						<?
 						$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
 						echo CFile::InputFile(
-							$option_name,
-							20,
-							$fid,
-							'/upload/'.$arModuleCfg['MODULE_ID'], '/',
-							0,
-							$arOption['ext'],
-							"",
-							0,
-							"class=typeinput",
-							"",
-							false,
-							true
+							$option_name, 									//FieldName
+							20,												//field_size
+							$fid, 											//ImageID
+							'/upload/', 									//ImageStorePath
+							0,												//file_max_size
+							$arOption['ext'],								//FileType
+							"",												//field_file
+							0,												//description_size
+							"class=typeinput",								//field_text
+							"",												//field_checkbox
+							true,											//ShowNotes
+							true											//ShowFilePath
 						)
 						?>
 					<? else : ?>
@@ -264,8 +258,11 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 			</tr>
 		<? endforeach ?>
 		<tr>
-			<td colspan="2">
-				<button type="submit" class="adm-btn adm-btn-save" name="save" value="reset_<?= $sId ?>"><? echo Loc::getMessage('ISPRO_module_name_RESET'); ?> (<?=$sName?>)</button>
+			<td>
+				<?= Loc::getMessage('ISPRO_module_name_RESET'); ?>
+			</td>
+			<td>
+				<button type="submit" class="adm-btn" name="save" value="reset_<?= $sId ?>"><?= Loc::getMessage('ISPRO_module_name_RESET'); ?> (<?= $sName ?>)</button>
 			</td>
 		</tr>
 
@@ -273,7 +270,7 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 
 	<? $tabControl->Buttons(); ?>
 
-		<button type="submit" class="adm-btn adm-btn-save" name="save" value="save"><? echo Loc::getMessage('ISPRO_module_name_SAVE'); ?></button>
+	<button type="submit" class="adm-btn adm-btn-save" name="save" value="save"><? echo Loc::getMessage('ISPRO_module_name_SAVE'); ?></button>
 
 
 	<? $tabControl->End(); ?>
