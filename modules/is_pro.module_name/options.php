@@ -240,11 +240,10 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 						</select>
 					<? elseif ($arOption['type'] == 'file') : ?>
 						<?
-						$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name_def, 0, $sId);
 						echo CFile::InputFile(
 							$option_name, 									//FieldName
 							20,												//field_size
-							$fid, 											//ImageID
+							$option[$option_name], 							//ImageID
 							'/upload/', 									//ImageStorePath
 							0,												//file_max_size
 							$arOption['ext'],								//FileType
