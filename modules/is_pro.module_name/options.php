@@ -34,6 +34,11 @@ $doc_root = \Bitrix\Main\Application::getDocumentRoot();
 $url_module = str_replace($doc_root, '', __DIR__);
 
 $options_list = $arModuleCfg['options_list'];
+foreach ($options_list as $option_name => $arOption) {
+	if (!isset($options_list[$option_name]['default'])) {
+		$options_list[$option_name]['default'] = '';
+	}
+}
 
 $ok_message = '';
 $eeror_message = '';
@@ -59,10 +64,10 @@ foreach ($siteIds as $sId => $sName) {
 
 	$setDefault = false;
 
-	$isConfigurated = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED_' . $sId);
-
+	$isConfigurated =
+	\Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED', 'N', $sId);
 	if ($isConfigurated != 'Y') {
-		\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED_' . $sId, 'Y');
+		\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], 'IS_CONFIGURATED', 'Y', $sId);
 		$setDefault = true;
 	}
 
@@ -88,7 +93,7 @@ foreach ($siteIds as $sId => $sName) {
 						"size" => $files['size'],
 						"tmp_name" => $files['tmp_name'],
 						"type" => $files['type'],
-						"old_file" => \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name),
+						"old_file" => \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name_def, $arOption['default'], $sId),
 						"del" => "Y",
 						"MODULE_ID" => $arModuleCfg['MODULE_ID']
 					];
@@ -105,7 +110,7 @@ foreach ($siteIds as $sId => $sName) {
 					}
 				}
 				if ($request->getpost($option_name.'_del') == 'Y') {
-					$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
+					$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name_def, $arOption['default'], $sId);
 					if ($fid > 0) {
 						CFile::Delete($fid);
 					}
@@ -122,7 +127,7 @@ foreach ($siteIds as $sId => $sName) {
 			}
 		} elseif ($setDefault) {
 			if ($arOption['type'] == 'file') {
-				$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
+				$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name_def, $arOption['default'], $sId);;
 				if ($fid > 0) {
 					CFile::Delete($fid);
 				}
@@ -133,11 +138,11 @@ foreach ($siteIds as $sId => $sName) {
 			$optionIsValid = true;
 		};
 		if (($saveOption || $setDefault) && ($optionIsValid === true)) {
-			\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], $option_name, $option[$option_name]);
+			\Bitrix\Main\Config\Option::set($arModuleCfg['MODULE_ID'], $option_name_def, $option[$option_name], $sId);
 			$ok_message .= 'SAVED: ' . Loc::getMessage('ISPRO_module_name_' . $option_name_def) . PHP_EOL;
 		};
 
-		$option[$option_name] = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
+		$option[$option_name] = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name_def,   $arOption['default'], $sId);
 		if ($option_type == 'json') {
 			$option[$option_name . '_VALUE'] = @json_decode($option[$option_name], true);
 		};
@@ -235,7 +240,7 @@ $tabControl = new CAdminTabControl(str_replace('.', '_', $arModuleCfg['MODULE_ID
 						</select>
 					<? elseif ($arOption['type'] == 'file') : ?>
 						<?
-						$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name);
+						$fid = \Bitrix\Main\Config\Option::get($arModuleCfg['MODULE_ID'], $option_name_def, 0, $sId);
 						echo CFile::InputFile(
 							$option_name, 									//FieldName
 							20,												//field_size
